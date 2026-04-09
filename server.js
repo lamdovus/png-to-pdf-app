@@ -18,7 +18,7 @@ async function launchBrowser() {
 }
 
 // ============================
-// 🚀 FINAL FIX - KHÔNG BAO GIỜ 2 TRANG
+// 🚀 FINAL PERFECT LAYOUT
 // ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
@@ -57,82 +57,91 @@ app.post("/generate-pdf", async (req, res) => {
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden; /* 🔥 chặn tràn */
         }
 
         .card {
+            position: relative;
             width: 61mm;
             height: 96mm;
-            padding: 6mm;
+            padding: 8mm 6mm 0 6mm;
             font-family: 'VUS Pro Medium';
-            overflow: hidden; /* 🔥 KEY */
         }
 
+        /* ===== HEADER ===== */
         .logo {
-            width: 140px;
-            margin-bottom: 6px;
+            width: 150px;
+            margin-bottom: 8px;
         }
 
         .name {
             font-family: 'VUS Pro Black';
-            font-size: 14pt;
+            font-size: 18pt;
             color: #f6042e;
+            line-height: 1.2;
         }
 
         .suffix {
             font-family: 'VUS Pro Bold';
-            font-size: 10pt;
+            font-size: 12pt;
         }
 
         .role {
-            font-size: 10pt;
-            margin-bottom: 6px;
+            font-size: 12pt;
+            margin-top: 4px;
+            margin-bottom: 14px;
         }
 
         .label {
             font-family: 'VUS Pro Bold';
             color: #f6042e;
-            font-size: 8pt;
-            margin-top: 4px;
+            font-size: 10pt;
+            margin-top: 8px;
         }
 
         .value {
-            font-size: 8pt;
+            font-size: 10pt;
         }
 
+        /* ===== WAVE ===== */
         .wave {
+            position: absolute;
+            left: -6mm;
+            bottom: 28mm;
             width: calc(100% + 12mm);
-            margin-left: -6mm;
-            margin-top: 6px;
         }
 
-        .bottom {
-            margin-top: 8px;
+        /* ===== FOOTER ===== */
+        .footer {
+            position: absolute;
+            bottom: 8mm;
+            left: 6mm;
+            right: 6mm;
+
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
         }
 
         .left {
-            font-size: 7pt;
-            line-height: 1.4;
+            font-size: 9pt;
+            line-height: 1.6;
         }
 
         .site {
             display: flex;
             align-items: center;
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .site img {
-            width: 10px;
-            margin-right: 4px;
+            width: 12px;
+            margin-right: 5px;
         }
 
         .qr-wrapper {
             position: relative;
-            width: 65px;
-            height: 65px;
+            width: 85px;
+            height: 85px;
         }
 
         .qr {
@@ -143,7 +152,7 @@ app.post("/generate-pdf", async (req, res) => {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 14px;
+            width: 18px;
             transform: translate(-50%, -50%);
         }
 
@@ -161,7 +170,7 @@ app.post("/generate-pdf", async (req, res) => {
                     <span class="suffix">(Ms.)</span>
                 </div>
 
-                <div class="role">Teaching Quality Manager</div>
+                <div class="role">ASA Manager</div>
 
                 <div class="label">Email</div>
                 <div class="value">${email}</div>
@@ -169,15 +178,17 @@ app.post("/generate-pdf", async (req, res) => {
                 <div class="label">Phone</div>
                 <div class="value">${phone}</div>
 
+                <!-- WAVE -->
                 <img class="wave"
                 src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
 
-                <div class="bottom">
+                <!-- FOOTER -->
+                <div class="footer">
+
                     <div class="left">
                         <div class="label">VUS UT TICH</div>
-                        <div>201/36A Ut Tich</div>
-                        <div>Tan Son Nhat Ward</div>
-                        <div>Ho Chi Minh City</div>
+                        <div>201/36A Ut Tich, Tan Son</div>
+                        <div>Nhat Ward, Ho Chi Minh City</div>
 
                         <div class="site">
                             <img src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/ICON_WEBSITE@3x.png" />
@@ -194,6 +205,7 @@ app.post("/generate-pdf", async (req, res) => {
                         <img class="qr-logo"
                         src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_QR_CODE@3x.png" />
                     </div>
+
                 </div>
 
             </div>
@@ -208,7 +220,7 @@ app.post("/generate-pdf", async (req, res) => {
 
         const pdf = await page.pdf({
             printBackground: true,
-            preferCSSPageSize: true /* 🔥 QUAN TRỌNG */
+            preferCSSPageSize: true
         });
 
         await browser.close();
