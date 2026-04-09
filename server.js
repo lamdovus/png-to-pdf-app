@@ -18,7 +18,7 @@ async function launchBrowser() {
 }
 
 // ============================
-// ✅ FINAL FIX - GIỐNG PNG
+// 🚀 FINAL FIX - KHÔNG BAO GIỜ 2 TRANG
 // ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
@@ -32,6 +32,15 @@ app.post("/generate-pdf", async (req, res) => {
         <meta charset="utf-8">
 
         <style>
+        @page {
+            size: 61mm 96mm;
+            margin: 0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         @font-face {
           font-family: 'VUS Pro Black';
           src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Black.otf');
@@ -48,86 +57,82 @@ app.post("/generate-pdf", async (req, res) => {
         body {
             margin: 0;
             padding: 0;
-            background: #fff;
+            overflow: hidden; /* 🔥 chặn tràn */
         }
 
         .card {
             width: 61mm;
             height: 96mm;
-            padding: 8mm 6mm; /* 🔥 FIX: padding đều trên dưới */
-            box-sizing: border-box;
+            padding: 6mm;
             font-family: 'VUS Pro Medium';
+            overflow: hidden; /* 🔥 KEY */
         }
 
         .logo {
-            width: 150px;
-            margin-bottom: 8px;
+            width: 140px;
+            margin-bottom: 6px;
         }
 
         .name {
             font-family: 'VUS Pro Black';
-            font-size: 16pt;
+            font-size: 14pt;
             color: #f6042e;
-            line-height: 1.2;
         }
 
         .suffix {
             font-family: 'VUS Pro Bold';
-            font-size: 11pt;
+            font-size: 10pt;
         }
 
         .role {
-            font-size: 11pt;
-            margin-top: 4px;
-            margin-bottom: 10px;
+            font-size: 10pt;
+            margin-bottom: 6px;
         }
 
         .label {
             font-family: 'VUS Pro Bold';
             color: #f6042e;
-            font-size: 9pt;
-            margin-top: 6px;
+            font-size: 8pt;
+            margin-top: 4px;
         }
 
         .value {
-            font-size: 9pt;
+            font-size: 8pt;
         }
 
         .wave {
             width: calc(100% + 12mm);
             margin-left: -6mm;
-            margin-top: 10px;
-            margin-bottom: 10px;
+            margin-top: 6px;
         }
 
         .bottom {
+            margin-top: 8px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-top: 10px;
         }
 
         .left {
-            font-size: 8pt;
-            line-height: 1.6;
+            font-size: 7pt;
+            line-height: 1.4;
         }
 
         .site {
             display: flex;
             align-items: center;
-            margin-top: 4px;
-            font-size: 8pt;
+            margin-top: 3px;
         }
 
         .site img {
-            width: 12px;
-            margin-right: 5px;
+            width: 10px;
+            margin-right: 4px;
         }
 
         .qr-wrapper {
             position: relative;
-            width: 75px;
-            height: 75px;
+            width: 65px;
+            height: 65px;
         }
 
         .qr {
@@ -138,7 +143,7 @@ app.post("/generate-pdf", async (req, res) => {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 18px;
+            width: 14px;
             transform: translate(-50%, -50%);
         }
 
@@ -168,7 +173,6 @@ app.post("/generate-pdf", async (req, res) => {
                 src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
 
                 <div class="bottom">
-
                     <div class="left">
                         <div class="label">VUS UT TICH</div>
                         <div>201/36A Ut Tich</div>
@@ -190,7 +194,6 @@ app.post("/generate-pdf", async (req, res) => {
                         <img class="qr-logo"
                         src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_QR_CODE@3x.png" />
                     </div>
-
                 </div>
 
             </div>
@@ -204,9 +207,8 @@ app.post("/generate-pdf", async (req, res) => {
         await page.setContent(html, { waitUntil: "networkidle0" });
 
         const pdf = await page.pdf({
-            width: "61mm",
-            height: "96mm",
-            printBackground: true
+            printBackground: true,
+            preferCSSPageSize: true /* 🔥 QUAN TRỌNG */
         });
 
         await browser.close();
@@ -223,10 +225,6 @@ app.post("/generate-pdf", async (req, res) => {
         if (browser) await browser.close();
         res.status(500).send("Error generating PDF");
     }
-});
-
-app.get("/", (req, res) => {
-    res.send("🚀 PDF server ready");
 });
 
 app.listen(PORT, () => {
