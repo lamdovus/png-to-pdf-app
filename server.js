@@ -23,7 +23,7 @@ if (!fs.existsSync(uploadDir)) {
 const upload = multer({ dest: uploadDir });
 
 // ============================
-// 🔥 Helper: launch browser
+// 🔥 Launch browser (Render)
 // ============================
 async function launchBrowser() {
     return await puppeteer.launch({
@@ -87,7 +87,7 @@ app.post("/upload-png", upload.single("file"), async (req, res) => {
 });
 
 // ============================
-// 🚀 API 2: HTML → PDF (VECTOR - CHUẨN IN)
+// 🚀 API 2: HTML → PDF (CHUẨN IN)
 // ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
@@ -95,52 +95,117 @@ app.post("/generate-pdf", async (req, res) => {
     try {
         const { name, email, phone } = req.body;
 
-        // 👉 HTML chuẩn in (bạn có thể thay bằng template full VUS mình đã build)
         const html = `
         <html>
         <head>
         <meta charset="utf-8">
+
         <style>
+        @font-face {
+          font-family: 'VUS Pro Black';
+          src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Black.otf');
+        }
+
+        @font-face {
+          font-family: 'VUS Pro Bold';
+          src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Bold.otf');
+        }
+
+        @font-face {
+          font-family: 'VUS Pro Medium';
+          src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Medium.otf');
+        }
+
         body {
             margin: 0;
             padding: 0;
         }
 
-        .card {
+        .vus-card {
             width: 61mm;
             height: 96mm;
             padding: 6mm;
             box-sizing: border-box;
-            font-family: Arial;
+            font-family: 'VUS Pro Medium', Arial;
         }
 
-        .name {
-            font-size: 18pt;
+        .vus-logo {
+            width: 140px;
+            margin-bottom: 10px;
+        }
+
+        .vus-name {
+            font-family: 'VUS Pro Black';
+            font-size: 16pt;
             color: #f6042e;
-            font-weight: bold;
+            line-height: 1.2;
         }
 
-        .label {
-            font-size: 9pt;
+        .vus-role {
+            font-size: 11pt;
+            margin-bottom: 4mm;
+        }
+
+        .vus-label {
+            font-family: 'VUS Pro Bold';
             color: #f6042e;
             margin-top: 3mm;
-        }
-
-        .value {
             font-size: 9pt;
         }
+
+        .vus-value {
+            font-size: 9pt;
+        }
+
+        .wave {
+            width: 100%;
+            margin-top: 4mm;
+        }
+
+        .bottom {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4mm;
+        }
+
+        .qr {
+            width: 80px;
+        }
+
         </style>
         </head>
 
         <body>
-            <div class="card">
-                <div class="name">${name || ""}</div>
+            <div class="vus-card">
 
-                <div class="label">Email</div>
-                <div class="value">${email || ""}</div>
+                <img class="vus-logo"
+                  src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
 
-                <div class="label">Phone</div>
-                <div class="value">${phone || ""}</div>
+                <div class="vus-name">${name || ""}</div>
+                <div class="vus-role">Teaching Quality Manager</div>
+
+                <div class="vus-label">Email</div>
+                <div class="vus-value">${email || ""}</div>
+
+                <div class="vus-label">Phone</div>
+                <div class="vus-value">${phone || ""}</div>
+
+                <img class="wave"
+                  src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
+
+                <div class="bottom">
+                    <div>
+                        <div class="vus-label">VUS DA NANG</div>
+                        <div class="vus-value">233 Dien Bien Phu</div>
+                        <div class="vus-value">vus.edu.vn</div>
+                    </div>
+
+                    <img class="qr"
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                          `BEGIN:VCARD\nFN:${name}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`
+                      )}" />
+                </div>
+
             </div>
         </body>
         </html>
@@ -149,7 +214,9 @@ app.post("/generate-pdf", async (req, res) => {
         browser = await launchBrowser();
         const page = await browser.newPage();
 
-        await page.setContent(html, { waitUntil: "networkidle0" });
+        await page.setContent(html, {
+            waitUntil: "networkidle0"
+        });
 
         const pdf = await page.pdf({
             width: "61mm",
@@ -161,7 +228,7 @@ app.post("/generate-pdf", async (req, res) => {
 
         res.set({
             "Content-Type": "application/pdf",
-            "Content-Disposition": "attachment; filename=employee-card.pdf"
+            "Content-Disposition": "attachment; filename=vus-card.pdf"
         });
 
         res.send(pdf);
@@ -174,7 +241,7 @@ app.post("/generate-pdf", async (req, res) => {
 });
 
 // ============================
-// 🧪 TEST SERVER
+// 🧪 TEST
 // ============================
 app.get("/", (req, res) => {
     res.send("🚀 PNG + HTML → PDF server is running");
