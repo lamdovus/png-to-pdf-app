@@ -105,12 +105,10 @@ app.post("/generate-pdf", async (req, res) => {
           font-family: 'VUS Pro Black';
           src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Black.otf');
         }
-
         @font-face {
           font-family: 'VUS Pro Bold';
           src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Bold.otf');
         }
-
         @font-face {
           font-family: 'VUS Pro Medium';
           src: url('https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LC-VUS-Pro-Medium.otf');
@@ -121,89 +119,134 @@ app.post("/generate-pdf", async (req, res) => {
             padding: 0;
         }
 
-        .vus-card {
+        .card {
             width: 61mm;
             height: 96mm;
-            padding: 6mm;
             box-sizing: border-box;
-            font-family: 'VUS Pro Medium', Arial;
+            padding: 6mm;
+            font-family: 'VUS Pro Medium';
+            overflow: hidden;
         }
 
-        .vus-logo {
+        .logo {
             width: 140px;
             margin-bottom: 10px;
         }
 
-        .vus-name {
+        .name {
             font-family: 'VUS Pro Black';
             font-size: 16pt;
             color: #f6042e;
             line-height: 1.2;
         }
 
-        .vus-role {
+        .role {
             font-size: 11pt;
-            margin-bottom: 4mm;
+            margin-bottom: 3mm;
         }
 
-        .vus-label {
+        .label {
             font-family: 'VUS Pro Bold';
             color: #f6042e;
-            margin-top: 3mm;
+            margin-top: 2mm;
             font-size: 9pt;
         }
 
-        .vus-value {
+        .value {
             font-size: 9pt;
         }
 
         .wave {
-            width: 100%;
-            margin-top: 4mm;
+            width: calc(100% + 12mm);
+            margin-left: -6mm;
+            margin-top: 3mm;
         }
 
         .bottom {
             display: flex;
             justify-content: space-between;
-            margin-top: 4mm;
+            margin-top: 3mm;
+        }
+
+        .left {
+            font-size: 8pt;
+            line-height: 1.4;
+        }
+
+        .site {
+            display: flex;
+            align-items: center;
+            margin-top: 2mm;
+        }
+
+        .site img {
+            width: 12px;
+            margin-right: 4px;
+        }
+
+        .qr-wrapper {
+            position: relative;
+            width: 80px;
+            height: 80px;
         }
 
         .qr {
-            width: 80px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .qr-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 18px;
+            transform: translate(-50%, -50%);
         }
 
         </style>
         </head>
 
         <body>
-            <div class="vus-card">
+            <div class="card">
 
-                <img class="vus-logo"
-                  src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
+                <img class="logo"
+                src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
 
-                <div class="vus-name">${name || ""}</div>
-                <div class="vus-role">Teaching Quality Manager</div>
+                <div class="name">${name}</div>
+                <div class="role">Teaching Quality Manager</div>
 
-                <div class="vus-label">Email</div>
-                <div class="vus-value">${email || ""}</div>
+                <div class="label">Email</div>
+                <div class="value">${email}</div>
 
-                <div class="vus-label">Phone</div>
-                <div class="vus-value">${phone || ""}</div>
+                <div class="label">Phone</div>
+                <div class="value">${phone}</div>
 
                 <img class="wave"
-                  src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
+                src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
 
                 <div class="bottom">
-                    <div>
-                        <div class="vus-label">VUS DA NANG</div>
-                        <div class="vus-value">233 Dien Bien Phu</div>
-                        <div class="vus-value">vus.edu.vn</div>
+
+                    <div class="left">
+                        <div class="label">VUS UT TICH</div>
+                        <div>201/36A Ut Tich</div>
+                        <div>Ho Chi Minh City</div>
+
+                        <div class="site">
+                            <img src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/ICON_WEBSITE@3x.png" />
+                            vus.edu.vn
+                        </div>
                     </div>
 
-                    <img class="qr"
-                      src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                          `BEGIN:VCARD\nFN:${name}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`
-                      )}" />
+                    <div class="qr-wrapper">
+                        <img class="qr"
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
+                            `BEGIN:VCARD\nFN:${name}\nTEL:${phone}\nEMAIL:${email}\nEND:VCARD`
+                        )}" />
+
+                        <img class="qr-logo"
+                        src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_QR_CODE@3x.png" />
+                    </div>
+
                 </div>
 
             </div>
@@ -221,7 +264,8 @@ app.post("/generate-pdf", async (req, res) => {
         const pdf = await page.pdf({
             width: "61mm",
             height: "96mm",
-            printBackground: true
+            printBackground: true,
+            pageRanges: "1"
         });
 
         await browser.close();
@@ -234,7 +278,7 @@ app.post("/generate-pdf", async (req, res) => {
         res.send(pdf);
 
     } catch (err) {
-        console.error("🔥 HTML PDF ERROR:", err);
+        console.error("🔥 PDF ERROR:", err);
         if (browser) await browser.close();
         res.status(500).send("Error generating PDF");
     }
