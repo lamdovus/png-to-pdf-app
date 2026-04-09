@@ -8,17 +8,20 @@ const path = require("path");
 const app = express();
 app.use(cors());
 
-// 🔥 dùng PORT của Render
+// 🔥 PORT cho Render
 const PORT = process.env.PORT || 3000;
 
 // 📁 tạo folder uploads nếu chưa có
-const uploadDir = "uploads";
+const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
-// 📁 nơi lưu file tạm
-const upload = multer({ dest: uploadDir });
+// 📁 config multer
+const upload = multer({
+    dest: uploadDir,
+    limits: { fileSize: 5 * 1024 * 1024 } // max 5MB
+});
 
 // ===== API UPLOAD PNG → PDF =====
 app.post("/upload-png", upload.single("file"), async (req, res) => {
@@ -31,24 +34,47 @@ app.post("/upload-png", upload.single("file"), async (req, res) => {
 
         const filePath = req.file.path;
 
-        // convert file → base64
+        // 👉 đọc file base64
         const imageBase64 =
             "data:image/png;base64," +
             fs.readFileSync(filePath, "base64");
 
-        // 🔥 cấu hình puppeteer cho Render
+        // 🔥 Puppeteer config chuẩn Render
         browser = await puppeteer.launch({
             headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-first-run",
+                "--no-zygote",
+                "--single-process"
+            ]
         });
 
         const page = await browser.newPage();
 
+        // 🔥 set timeout tránh treo
+        page.setDefaultNavigationTimeout(60000);
+
         const html = `
         <html>
-        <body style="margin:0;padding:0;">
-            <img src="${imageBase64}" 
-                 style="width:61mm;height:96mm;object-fit:cover;" />
+        <head>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                }
+                img {
+                    width: 61mm;
+                    height: 96mm;
+                    object-fit: cover;
+                }
+            </style>
+        </head>
+        <body>
+            <img src="${imageBase64}" />
         </body>
         </html>
         `;
@@ -69,10 +95,13 @@ app.post("/upload-png", upload.single("file"), async (req, res) => {
             }
         });
 
+        // 🔥 đóng browser trước
         await browser.close();
 
-        // xoá file tạm
-        fs.unlinkSync(filePath);
+        // 🔥 xoá file temp an toàn
+        fs.unlink(filePath, (err) => {
+            if (err) console.error("Error deleting file:", err);
+        });
 
         res.set({
             "Content-Type": "application/pdf",
@@ -82,12 +111,21 @@ app.post("/upload-png", upload.single("file"), async (req, res) => {
         res.send(pdf);
 
     } catch (err) {
-        console.error(err);
+        console.error("🔥 ERROR:", err);
 
-        if (browser) await browser.close();
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (e) {}
+        }
 
         res.status(500).send("Error converting PNG to PDF");
     }
+});
+
+// ===== HEALTH CHECK (Render dùng) =====
+app.get("/healthz", (req, res) => {
+    res.send("OK");
 });
 
 // ===== TEST SERVER =====
@@ -97,5 +135,5 @@ app.get("/", (req, res) => {
 
 // ===== START SERVER =====
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
