@@ -34,60 +34,7 @@ async function launchBrowser() {
 }
 
 // ============================
-// ✅ API 1: PNG → PDF (OLD)
-// ============================
-app.post("/upload-png", upload.single("file"), async (req, res) => {
-    let browser;
-
-    try {
-        if (!req.file) {
-            return res.status(400).send("No file uploaded");
-        }
-
-        const filePath = req.file.path;
-
-        const imageBase64 =
-            "data:image/png;base64," +
-            fs.readFileSync(filePath, "base64");
-
-        browser = await launchBrowser();
-        const page = await browser.newPage();
-
-        const html = `
-        <html>
-        <body style="margin:0;padding:0;">
-            <img src="${imageBase64}" style="width:61mm;height:96mm;" />
-        </body>
-        </html>
-        `;
-
-        await page.setContent(html, { waitUntil: "networkidle0" });
-
-        const pdf = await page.pdf({
-            width: "61mm",
-            height: "96mm",
-            printBackground: true
-        });
-
-        await browser.close();
-        fs.unlinkSync(filePath);
-
-        res.set({
-            "Content-Type": "application/pdf",
-            "Content-Disposition": "attachment; filename=card.png.pdf"
-        });
-
-        res.send(pdf);
-
-    } catch (err) {
-        console.error("🔥 PNG ERROR:", err);
-        if (browser) await browser.close();
-        res.status(500).send("Error converting PNG to PDF");
-    }
-});
-
-// ============================
-// 🚀 API 2: HTML → PDF (CHUẨN IN)
+// 🚀 API HTML → PDF (CHUẨN IN)
 // ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
@@ -121,11 +68,10 @@ app.post("/generate-pdf", async (req, res) => {
 
         .card {
             width: 61mm;
-            height: 96mm;
+            min-height: 96mm; /* ✅ FIX mất nội dung */
+            padding: 5mm;
             box-sizing: border-box;
-            padding: 6mm;
             font-family: 'VUS Pro Medium';
-            overflow: hidden;
         }
 
         .logo {
@@ -157,8 +103,8 @@ app.post("/generate-pdf", async (req, res) => {
         }
 
         .wave {
-            width: calc(100% + 12mm);
-            margin-left: -6mm;
+            width: calc(100% + 10mm);
+            margin-left: -5mm;
             margin-top: 3mm;
         }
 
@@ -186,8 +132,8 @@ app.post("/generate-pdf", async (req, res) => {
 
         .qr-wrapper {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 75px;
+            height: 75px;
         }
 
         .qr {
@@ -199,7 +145,7 @@ app.post("/generate-pdf", async (req, res) => {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 18px;
+            width: 16px;
             transform: translate(-50%, -50%);
         }
 
@@ -212,14 +158,14 @@ app.post("/generate-pdf", async (req, res) => {
                 <img class="logo"
                 src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
 
-                <div class="name">${name}</div>
+                <div class="name">${name || ""}</div>
                 <div class="role">Teaching Quality Manager</div>
 
                 <div class="label">Email</div>
-                <div class="value">${email}</div>
+                <div class="value">${email || ""}</div>
 
                 <div class="label">Phone</div>
-                <div class="value">${phone}</div>
+                <div class="value">${phone || ""}</div>
 
                 <img class="wave"
                 src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
@@ -265,7 +211,7 @@ app.post("/generate-pdf", async (req, res) => {
             width: "61mm",
             height: "96mm",
             printBackground: true,
-            pageRanges: "1"
+            preferCSSPageSize: true /* ✅ FIX 1 page */
         });
 
         await browser.close();
@@ -288,7 +234,7 @@ app.post("/generate-pdf", async (req, res) => {
 // 🧪 TEST
 // ============================
 app.get("/", (req, res) => {
-    res.send("🚀 PNG + HTML → PDF server is running");
+    res.send("🚀 PDF server is running");
 });
 
 // ============================
