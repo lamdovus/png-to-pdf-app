@@ -5,10 +5,13 @@ const cors = require("cors");
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "20mb" }));
 
 const PORT = process.env.PORT || 3000;
 
+// ============================
+// 🚀 Launch browser
+// ============================
 async function launchBrowser() {
     return await puppeteer.launch({
         args: chromium.args,
@@ -17,11 +20,30 @@ async function launchBrowser() {
     });
 }
 
+// ============================
+// ✅ TEST
+// ============================
+app.get("/", (req, res) => {
+    res.send("🚀 PDF server running");
+});
+
+// ============================
+// 🚀 GENERATE PDF
+// ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
 
     try {
         const { name, email, phone } = req.body;
+
+        // 🔥 FIX QR (KHÔNG VIẾT INLINE)
+        const qrData = encodeURIComponent(
+`BEGIN:VCARD
+FN:${name}
+TEL:${phone}
+EMAIL:${email}
+END:VCARD`
+        );
 
         const html = `
         <html>
@@ -65,7 +87,7 @@ app.post("/generate-pdf", async (req, res) => {
             font-family: 'VUS Pro Medium';
         }
 
-        /* TOP */
+        /* ===== TOP ===== */
         .logo {
             width: 150px;
             margin-bottom: 8px;
@@ -98,16 +120,16 @@ app.post("/generate-pdf", async (req, res) => {
             font-size: 10pt;
         }
 
-        /* WAVE */
+        /* ===== WAVE ===== */
         .wave {
             width: calc(100% + 12mm);
             margin-left: -6mm;
             margin-top: 12px;
         }
 
-        /* FOOTER */
+        /* ===== FOOTER ===== */
         .footer {
-            margin-top: auto; /* 🔥 KEY FIX */
+            margin-top: auto;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -129,6 +151,7 @@ app.post("/generate-pdf", async (req, res) => {
             margin-right: 5px;
         }
 
+        /* ===== QR ===== */
         .qr-wrapper {
             position: relative;
             width: 80px;
@@ -171,6 +194,7 @@ app.post("/generate-pdf", async (req, res) => {
                 src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/wave_line.png" />
 
                 <div class="footer">
+
                     <div class="left">
                         <div class="label">VUS UT TICH</div>
                         <div>201/36A Ut Tich</div>
@@ -185,13 +209,12 @@ app.post("/generate-pdf", async (req, res) => {
 
                     <div class="qr-wrapper">
                         <img class="qr"
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                            \`BEGIN:VCARD\\nFN:${name}\\nTEL:${phone}\\nEMAIL:${email}\\nEND:VCARD\`
-                        )}" />
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrData}" />
 
                         <img class="qr-logo"
                         src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_QR_CODE@3x.png" />
                     </div>
+
                 </div>
 
             </div>
@@ -202,7 +225,11 @@ app.post("/generate-pdf", async (req, res) => {
         browser = await launchBrowser();
         const page = await browser.newPage();
 
-        await page.setContent(html, { waitUntil: "networkidle0" });
+        await page.setContent(html, {
+            waitUntil: "networkidle0"
+        });
+
+        await page.evaluateHandle("document.fonts.ready");
 
         const pdf = await page.pdf({
             printBackground: true,
@@ -219,12 +246,15 @@ app.post("/generate-pdf", async (req, res) => {
         res.send(pdf);
 
     } catch (err) {
-        console.error(err);
+        console.error("🔥 ERROR:", err);
         if (browser) await browser.close();
         res.status(500).send("Error generating PDF");
     }
 });
 
+// ============================
+// 🚀 START
+// ============================
 app.listen(PORT, () => {
     console.log("Server running on port " + PORT);
 });
