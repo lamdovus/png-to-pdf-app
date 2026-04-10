@@ -1,5 +1,6 @@
 const express = require("express");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("@sparticuz/chromium");
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
@@ -10,9 +11,11 @@ app.post("/generate-pdf", async (req, res) => {
 
         console.log("🚀 Start generate PDF");
 
+        // 🔥 LAUNCH CHROME (QUAN TRỌNG)
         const browser = await puppeteer.launch({
-            headless: "new",
-            args: ["--no-sandbox", "--disable-setuid-sandbox"]
+            args: chromium.args,
+            executablePath: await chromium.executablePath(),
+            headless: chromium.headless
         });
 
         const page = await browser.newPage();
@@ -22,7 +25,7 @@ app.post("/generate-pdf", async (req, res) => {
             waitUntil: ["domcontentloaded", "networkidle0"]
         });
 
-        // 🔥 WAIT IMAGE LOAD (fix QR)
+        // 🔥 WAIT IMAGE LOAD (fix mất QR)
         await page.evaluate(async () => {
             const waitImage = (img) => {
                 if (img.complete) return Promise.resolve();
@@ -40,10 +43,10 @@ app.post("/generate-pdf", async (req, res) => {
         // 🔥 WAIT FONT
         await page.evaluateHandle('document.fonts.ready');
 
-        // 🔥 DELAY thêm cho QR API
+        // 🔥 DELAY cho QR API
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // DEBUG screenshot (optional)
+        // DEBUG (nếu cần)
         // await page.screenshot({ path: "debug.png", fullPage: true });
 
         // 🔥 FIX 1 PAGE
@@ -71,4 +74,11 @@ app.post("/generate-pdf", async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log("🚀 Server running port 3000"));
+// health check
+app.get("/", (req, res) => {
+    res.send("PDF service running");
+});
+
+// 🔥 PORT cho Render
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running port ${PORT}`));
