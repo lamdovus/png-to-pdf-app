@@ -1,66 +1,60 @@
 const express = require("express");
-const puppeteer = require("puppeteer-core");
-const chromium = require("@sparticuz/chromium");
-const cors = require("cors");
+const puppeteer = require("puppeteer");
 
 const app = express();
-app.use(cors());
-app.use(express.json({ limit: "20mb" }));
+app.use(express.json({ limit: "10mb" }));
 
-const PORT = process.env.PORT || 3000;
-
-// ============================
-// 🚀 Launch browser
-// ============================
-async function launchBrowser() {
-    console.log("🚀 Launching browser...");
-    return await puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless
-    });
-}
-
-// ============================
-// 🚀 API GENERATE PDF
-// ============================
 app.post("/generate-pdf", async (req, res) => {
-    let browser;
-
     try {
-        console.log("📥 Request received");
-
         const { html } = req.body;
 
-        if (!html) {
-            console.error("❌ Missing HTML");
-            return res.status(400).send("Missing HTML");
-        }
+        console.log("🚀 Start generate PDF");
 
-        console.log("📄 HTML length:", html.length);
-
-        browser = await launchBrowser();
-        const page = await browser.newPage();
-
-        console.log("🌐 Setting content...");
-        await page.setContent(html, {
-            waitUntil: "networkidle0"
+        const browser = await puppeteer.launch({
+            headless: "new",
+            args: ["--no-sandbox", "--disable-setuid-sandbox"]
         });
 
-        console.log("⏳ Waiting fonts...");
-        await page.evaluateHandle("document.fonts.ready");
+        const page = await browser.newPage();
 
-        console.log("🖨 Generating PDF...");
+        // SET HTML
+        await page.setContent(html, {
+            waitUntil: ["domcontentloaded", "networkidle0"]
+        });
+
+        // 🔥 WAIT IMAGE LOAD (fix QR)
+        await page.evaluate(async () => {
+            const waitImage = (img) => {
+                if (img.complete) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = img.onerror = resolve;
+                });
+            };
+
+            const images = Array.from(document.images);
+            console.log("IMG COUNT:", images.length);
+
+            await Promise.all(images.map(waitImage));
+        });
+
+        // 🔥 WAIT FONT
+        await page.evaluateHandle('document.fonts.ready');
+
+        // 🔥 DELAY thêm cho QR API
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        // DEBUG screenshot (optional)
+        // await page.screenshot({ path: "debug.png", fullPage: true });
+
+        // 🔥 FIX 1 PAGE
         const pdf = await page.pdf({
-            width: "61mm",
-            height: "96mm",
+            width: "453px",
+            height: "750px",
             printBackground: true,
-            margin: 0
+            preferCSSPageSize: true
         });
 
         await browser.close();
-
-        console.log("✅ PDF generated OK");
 
         res.set({
             "Content-Type": "application/pdf",
@@ -69,21 +63,12 @@ app.post("/generate-pdf", async (req, res) => {
 
         res.send(pdf);
 
+        console.log("✅ Done PDF");
+
     } catch (err) {
-        console.error("🔥 SERVER ERROR:", err);
-
-        if (browser) await browser.close();
-
+        console.error("❌ PDF ERROR:", err);
         res.status(500).send("Error generating PDF");
     }
 });
 
-// ============================
-app.get("/", (req, res) => {
-    res.send("🚀 HTML → PDF server running");
-});
-
-// ============================
-app.listen(PORT, () => {
-    console.log("🚀 Server running on port " + PORT);
-});
+app.listen(3000, () => console.log("🚀 Server running port 3000"));
