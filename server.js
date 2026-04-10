@@ -9,6 +9,9 @@ app.use(express.json({ limit: "10mb" }));
 
 const PORT = process.env.PORT || 3000;
 
+// ============================
+// Launch browser
+// ============================
 async function launchBrowser() {
     return await puppeteer.launch({
         args: chromium.args,
@@ -18,7 +21,7 @@ async function launchBrowser() {
 }
 
 // ============================
-// 🚀 FINAL PERFECT LAYOUT
+// HTML → PDF
 // ============================
 app.post("/generate-pdf", async (req, res) => {
     let browser;
@@ -63,11 +66,16 @@ app.post("/generate-pdf", async (req, res) => {
             position: relative;
             width: 61mm;
             height: 96mm;
-            padding: 8mm 6mm 0 6mm;
+            padding: 8mm 6mm;
             font-family: 'VUS Pro Medium';
+            overflow: hidden;
         }
 
-        /* ===== HEADER ===== */
+        /* ===== CONTENT ===== */
+        .content {
+            z-index: 2;
+        }
+
         .logo {
             width: 150px;
             margin-bottom: 8px;
@@ -88,14 +96,14 @@ app.post("/generate-pdf", async (req, res) => {
         .role {
             font-size: 12pt;
             margin-top: 4px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .label {
             font-family: 'VUS Pro Bold';
             color: #f6042e;
             font-size: 10pt;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .value {
@@ -104,10 +112,10 @@ app.post("/generate-pdf", async (req, res) => {
 
         /* ===== WAVE ===== */
         .wave {
-            position: absolute;
-            left: -6mm;
-            bottom: 28mm;
+            display: block;
             width: calc(100% + 12mm);
+            margin-left: -6mm;
+            margin-top: 14px;
         }
 
         /* ===== FOOTER ===== */
@@ -124,7 +132,7 @@ app.post("/generate-pdf", async (req, res) => {
 
         .left {
             font-size: 9pt;
-            line-height: 1.6;
+            line-height: 1.5;
         }
 
         .site {
@@ -138,10 +146,11 @@ app.post("/generate-pdf", async (req, res) => {
             margin-right: 5px;
         }
 
+        /* ===== QR ===== */
         .qr-wrapper {
             position: relative;
-            width: 85px;
-            height: 85px;
+            width: 80px;
+            height: 80px;
         }
 
         .qr {
@@ -152,7 +161,7 @@ app.post("/generate-pdf", async (req, res) => {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 18px;
+            width: 16px;
             transform: translate(-50%, -50%);
         }
 
@@ -162,21 +171,22 @@ app.post("/generate-pdf", async (req, res) => {
         <body>
             <div class="card">
 
-                <img class="logo"
-                src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
+                <div class="content">
+                    <img class="logo"
+                    src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_VUS_ENG@3x.png" />
 
-                <div class="name">
-                    ${name}
-                    <span class="suffix">(Ms.)</span>
+                    <div class="name">
+                        ${name} <span class="suffix">(Ms.)</span>
+                    </div>
+
+                    <div class="role">ASA Manager</div>
+
+                    <div class="label">Email</div>
+                    <div class="value">${email}</div>
+
+                    <div class="label">Phone</div>
+                    <div class="value">${phone}</div>
                 </div>
-
-                <div class="role">ASA Manager</div>
-
-                <div class="label">Email</div>
-                <div class="value">${email}</div>
-
-                <div class="label">Phone</div>
-                <div class="value">${phone}</div>
 
                 <!-- WAVE -->
                 <img class="wave"
@@ -184,11 +194,11 @@ app.post("/generate-pdf", async (req, res) => {
 
                 <!-- FOOTER -->
                 <div class="footer">
-
                     <div class="left">
                         <div class="label">VUS UT TICH</div>
-                        <div>201/36A Ut Tich, Tan Son</div>
-                        <div>Nhat Ward, Ho Chi Minh City</div>
+                        <div>201/36A Ut Tich</div>
+                        <div>Tan Son Nhat Ward</div>
+                        <div>Ho Chi Minh City</div>
 
                         <div class="site">
                             <img src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/ICON_WEBSITE@3x.png" />
@@ -205,7 +215,6 @@ app.post("/generate-pdf", async (req, res) => {
                         <img class="qr-logo"
                         src="https://hcm03.vstorage.vngcloud.vn/v1/AUTH_0f4fc1cb9192411da4f5ef9ef7553ea3/LXP_CE/hr_emp_card/LOGO_QR_CODE@3x.png" />
                     </div>
-
                 </div>
 
             </div>
@@ -233,10 +242,17 @@ app.post("/generate-pdf", async (req, res) => {
         res.send(pdf);
 
     } catch (err) {
-        console.error(err);
+        console.error("🔥 ERROR:", err);
         if (browser) await browser.close();
         res.status(500).send("Error generating PDF");
     }
+});
+
+// ============================
+// TEST
+// ============================
+app.get("/", (req, res) => {
+    res.send("🚀 PDF server running");
 });
 
 app.listen(PORT, () => {
